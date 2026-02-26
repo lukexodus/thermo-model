@@ -146,13 +146,19 @@ class IrreversibleHeatTransfer:
 
 class InteractiveVisualizer:
     """Interactive visualization with animation and controls."""
-    
+
     def __init__(self):
         self.system_types = ["Closed", "Open", "Isolated"]
         self.sim = IrreversibleHeatTransfer(system_type="Closed")
         self.setup_figure()
         self.is_playing = False
         self.animation = None
+
+    def on_system_type_change(self, label):
+        self.sim.system_type = label
+        self.sim.T_eq = self.sim._calculate_equilibrium_temp()
+        self.update_simulation()
+        self.plot_all()
         
     def setup_figure(self):
         """Create the figure with subplots and controls."""
@@ -180,25 +186,20 @@ class InteractiveVisualizer:
         self.plot_all()
         
     def setup_sliders(self):
-            # System type radio buttons
-            from matplotlib.widgets import RadioButtons
-            ax_sys = plt.axes([0.55, 0.15, 0.12, 0.08], facecolor='lightgoldenrodyellow')
-            self.radio_system = RadioButtons(ax_sys, self.system_types, active=0)
-            self.radio_system.on_clicked(self.on_system_type_change)
-            def on_system_type_change(self, label):
-                self.sim.system_type = label
-                self.sim.T_eq = self.sim._calculate_equilibrium_temp()
-                self.update_simulation()
-                self.plot_all()
         """Create interactive sliders."""
+        # System type radio buttons
+        from matplotlib.widgets import RadioButtons
+        ax_sys = plt.axes([0.55, 0.15, 0.12, 0.08], facecolor='lightgoldenrodyellow')
+        self.radio_system = RadioButtons(ax_sys, self.system_types, active=0)
+        self.radio_system.on_clicked(self.on_system_type_change)
+
         slider_color = 'lightgoldenrodyellow'
-        
         # Slider axes
         ax_T_hot = plt.axes([0.15, 0.15, 0.25, 0.02], facecolor=slider_color)
         ax_T_cold = plt.axes([0.15, 0.11, 0.25, 0.02], facecolor=slider_color)
         ax_h = plt.axes([0.15, 0.07, 0.25, 0.02], facecolor=slider_color)
         ax_mass = plt.axes([0.15, 0.03, 0.25, 0.02], facecolor=slider_color)
-        
+
         # Create sliders
         self.slider_T_hot = Slider(ax_T_hot, 'T_hot (K)', 310, 500, 
                                    valinit=self.sim.T_hot_0, valstep=10)
@@ -208,7 +209,7 @@ class InteractiveVisualizer:
                                valinit=self.sim.h, valstep=10)
         self.slider_mass_ratio = Slider(ax_mass, 'Mass Ratio (m_hot/m_cold)', 0.2, 5.0, 
                                        valinit=1.0, valstep=0.1)
-        
+
         # Connect sliders to update function
         self.slider_T_hot.on_changed(self.on_slider_change)
         self.slider_T_cold.on_changed(self.on_slider_change)
